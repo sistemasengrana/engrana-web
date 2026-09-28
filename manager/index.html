@@ -5,38 +5,136 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Engrana Manager</title>
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="#0F172A">
+<meta name="theme-color" content="#2563EB">
 <link rel="manifest" href="/manager/manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://script.google.com">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   html,body{margin:0;height:100%;background:#F3F5F9;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#0F172A}
-  body{display:grid;place-items:center}
+  #marco{position:fixed;inset:0;width:100%;height:100%;border:0;display:block}
+  .capa{position:fixed;inset:0;display:grid;place-items:center;background:#F3F5F9;padding:16px;box-sizing:border-box}
+  #splash{z-index:3;transition:opacity .35s ease}
+  #splash.fuera{opacity:0;pointer-events:none}
   .sp{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:24px}
   .sp img{width:70px;height:70px;animation:gira 2.4s linear infinite}
   @keyframes gira{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion: reduce){.sp img{animation:none}}
   .sp b{font-size:17px}
-  .sp a{display:none;background:#2563EB;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:11px 18px;border-radius:10px}
-  .sp a.ver{display:inline-block}
+  .sp span{color:#475569;font-size:14px}
+  .btn{background:#2563EB;color:#fff;border:0;font-weight:700;font-size:14px;padding:11px 18px;border-radius:10px;cursor:pointer}
+  .oculto{display:none!important}
+
+  /* Ingreso con Google */
+  #ingreso{z-index:2}
+  .tarjeta{width:100%;max-width:380px;background:#fff;border-radius:18px;box-shadow:0 10px 30px rgba(15,23,42,.08);padding:30px 22px;text-align:center}
+  .tarjeta img{width:64px;height:64px}
+  .tarjeta h1{font-size:22px;margin:10px 0 4px}
+  .tarjeta p{color:#64748B;font-size:14px;margin:0 0 22px}
+  #g-btn{display:flex;justify-content:center;min-height:44px}
+  .o{display:flex;align-items:center;gap:10px;color:#94A3B8;font-size:12.5px;margin:18px 0 12px}
+  .o::before,.o::after{content:"";flex:1;height:1px;background:#E2E8F0}
+  #usar-clave{background:transparent;border:1.5px solid #E2E8F0;color:#0F172A;border-radius:10px;padding:11px 16px;font-weight:700;font-size:14px;cursor:pointer;width:100%}
+  #g-msg{min-height:20px;margin-top:12px;font-size:13.5px;color:#DC2626}
+  #g-msg.info{color:#475569}
 </style>
 </head>
 <body>
-<div class="sp">
-  <img src="/icons/favicon.svg" alt="">
-  <b>Abriendo tu Manager…</b>
-  <a id="abrir">Abrir Manager</a>
+<iframe id="marco" title="Engrana Manager" allow="clipboard-read *; clipboard-write *"></iframe>
+
+<div class="capa oculto" id="ingreso">
+  <div class="tarjeta">
+    <img src="/icons/favicon.svg" alt="">
+    <h1>Engrana Manager</h1>
+    <p>Entra con tu cuenta de Google</p>
+    <div id="g-btn"></div>
+    <div id="g-msg"></div>
+    <div class="o">o</div>
+    <button id="usar-clave">Usar mi contraseña</button>
+  </div>
 </div>
+
+<div class="capa" id="splash">
+  <div class="sp">
+    <img src="/icons/favicon.svg" alt="">
+    <b id="sp-t">Abriendo tu Manager…</b>
+    <span id="sp-s">Un momento, por favor.</span>
+    <button class="btn oculto" id="sp-r">Reintentar</button>
+  </div>
+</div>
+
 <script>
 (function () {
   'use strict';
-  /* Tu Manager necesita tu sesión de Google (sistemasengrana), por eso se abre directo
-     en lugar de dentro de esta página (Google no deja usar tu sesión incrustada). */
-  var MANAGER = 'https://script.google.com/macros/s/AKfycbzeRpF-4jd1p1vWWt_hS5lYB0vZ3Rb1uOScLwq1YPki/dev?m=1';
-  var a = document.getElementById('abrir');
-  a.href = MANAGER;
-  setTimeout(function () { a.classList.add('ver'); }, 2500);   // por si el navegador no redirige solo
+  /* El Manager corre en tu app de Apps Script (enlace público).
+     Se entra con "Continuar con Google" (solo correos permitidos) o con tu contraseña del Manager. */
+  var MANAGER = 'https://script.google.com/macros/s/AKfycbzVYX6Z67QRXI0PYRxnPfMaOThtmLNB-NvaNgRLgBlsC92df7WDm2FEAVvUFnUkj6xc/exec?m=1';
+  var $ = function (id) { return document.getElementById(id); };
+  var marco = $('marco'), splash = $('splash'), espera = null;
+  var manager = null;          // { win, origin } de la página del Manager, para responderle
+  var googleListo = '';        // client_id con el que ya se preparó el botón
+
+  /* ---------- Cargar el Manager ---------- */
+  function abrir() {
+    splash.classList.remove('fuera'); $('sp-r').classList.add('oculto');
+    if (!navigator.onLine) { $('sp-t').textContent = 'Sin conexión a internet'; $('sp-s').textContent = 'Se abrirá cuando vuelva la señal.'; $('sp-r').classList.remove('oculto'); return; }
+    $('sp-t').textContent = 'Abriendo tu Manager…'; $('sp-s').textContent = 'Un momento, por favor.';
+    clearTimeout(espera);
+    espera = setTimeout(function () { $('sp-t').textContent = 'Está tardando más de lo normal'; $('sp-s').textContent = 'Revisa tu señal y vuelve a intentar.'; $('sp-r').classList.remove('oculto'); }, 20000);
+    marco.src = MANAGER;
+  }
+  marco.addEventListener('load', function () {
+    if (!marco.src) return;
+    clearTimeout(espera);
+    setTimeout(function () { splash.classList.add('fuera'); }, 400);
+  });
+  $('sp-r').onclick = abrir;
+  window.addEventListener('online', function () { if (!splash.classList.contains('fuera')) abrir(); });
+
+  /* ---------- Ingreso con Google ---------- */
+  function mensaje(t, info) { $('g-msg').textContent = t || ''; $('g-msg').className = info ? 'info' : ''; }
+
+  function prepararGoogle(clientId, intento) {
+    intento = intento || 0;
+    if (!window.google || !google.accounts || !google.accounts.id) {
+      if (intento < 40) return setTimeout(function () { prepararGoogle(clientId, intento + 1); }, 250);
+      return mensaje('No se pudo cargar el botón de Google. Usa tu contraseña.');
+    }
+    if (googleListo !== clientId) {
+      google.accounts.id.initialize({ client_id: clientId, callback: alEntrarConGoogle, ux_mode: 'popup', auto_select: false, cancel_on_tap_outside: true });
+      googleListo = clientId;
+    }
+    $('g-btn').innerHTML = '';
+    google.accounts.id.renderButton($('g-btn'), { type: 'standard', theme: 'outline', size: 'large', text: 'continue_with', shape: 'pill', logo_alignment: 'left', locale: 'es', width: 300 });
+  }
+
+  function alEntrarConGoogle(resp) {
+    if (!manager || !resp || !resp.credential) return;
+    mensaje('Verificando tu cuenta…', true);
+    manager.win.postMessage({ engrana: 'mgr-google', credential: resp.credential }, manager.origin);
+  }
+
+  $('usar-clave').onclick = function () { $('ingreso').classList.add('oculto'); };
+
+  /* ---------- Mensajes del Manager ---------- */
+  window.addEventListener('message', function (ev) {
+    if (!/^https:\/\/[a-z0-9-]+-script\.googleusercontent\.com$/.test(ev.origin)) return;
+    var d = ev.data || {};
+    if (d.engrana === 'mgr-login' && /^[\w-]+\.apps\.googleusercontent\.com$/.test(d.clientId || '')) {
+      manager = { win: ev.source, origin: ev.origin };
+      mensaje('');
+      $('ingreso').classList.remove('oculto');
+      prepararGoogle(d.clientId);
+    } else if (d.engrana === 'mgr-login-ok') {
+      $('ingreso').classList.add('oculto'); mensaje('');
+    } else if (d.engrana === 'mgr-login-error') {
+      mensaje(String(d.msg || 'No se pudo entrar.'));
+    }
+  });
+
+  abrir();
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(function () {});
-  location.replace(MANAGER);
 })();
 </script>
 </body>
