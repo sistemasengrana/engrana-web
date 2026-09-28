@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Engrana Manager</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0F172A">
+<link rel="manifest" href="/manager/manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="/icons/favicon.svg">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#F3F5F9;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#0F172A}
+  #marco{position:fixed;inset:0;width:100%;height:100%;border:0}
+  #splash{position:fixed;inset:0;display:grid;place-items:center;background:#F3F5F9;transition:opacity .35s ease;z-index:2}
+  #splash.fuera{opacity:0;pointer-events:none}
+  .sp{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:24px}
+  .sp img{width:70px;height:70px;animation:gira 2.4s linear infinite}
+  @keyframes gira{to{transform:rotate(360deg)}}
+  .sp b{font-size:17px}
+  #directo{position:fixed;left:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:3;background:#0F172A;color:#fff;
+    text-decoration:none;font-size:13px;font-weight:700;padding:9px 13px;border-radius:10px;box-shadow:0 8px 24px rgba(15,23,42,.25);
+    opacity:0;pointer-events:none;transition:opacity .3s ease}
+  #directo.ver{opacity:1;pointer-events:auto}
+</style>
+</head>
+<body>
+<iframe id="marco" title="Engrana Manager"></iframe>
+<div id="splash"><div class="sp"><img src="/icons/favicon.svg" alt=""><b>Abriendo tu Manager…</b></div></div>
+<a id="directo" target="_blank" rel="noopener">¿No cargó? Abrir directo</a>
+<script>
+(function () {
+  'use strict';
+  /* Tu Manager (implementación /dev: solo tú, con tu cuenta de Google abierta, siempre con el último código) */
+  var MANAGER = 'https://script.google.com/macros/s/AKfycbzeRpF-4jd1p1vWWt_hS5lYB0vZ3Rb1uOScLwq1YPki/dev?m=1';
+  var marco = document.getElementById('marco'), splash = document.getElementById('splash'), directo = document.getElementById('directo');
+  directo.href = MANAGER;
+  marco.addEventListener('load', function () { setTimeout(function () { splash.classList.add('fuera'); }, 400); });
+  // Si en 8 segundos no se ve, muestra el botón para abrirlo directo en Google
+  setTimeout(function () { directo.classList.add('ver'); setTimeout(function () { directo.classList.remove('ver'); }, 12000); }, 8000);
+  marco.src = MANAGER;
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(function () {});
+})();
+</script>
+</body>
+</html>

@@ -2,25 +2,223 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Engrana · Sistemas para talleres</title>
-<meta name="description" content="Sistemas de órdenes y control para talleres en Guatemala.">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Engrana · Sistema de órdenes para talleres</title>
+<meta name="description" content="Sistema de órdenes y control para talleres de carros y motos en Guatemala.">
 <meta name="theme-color" content="#2563EB">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cg fill='%232563EB' stroke='%232563EB' stroke-width='24' stroke-linejoin='round'%3E%3Cpath d='M278.7,97.0 L299.1,72.1 L353.1,94.5 L349.9,126.5 L373.5,150.1 L405.5,146.9 L427.9,200.9 L403.0,221.3 L403.0,254.7 L427.9,275.1 L405.5,329.1 L373.5,325.9 L349.9,349.5 L353.1,381.5 L299.1,403.9 L278.7,379.0 L245.3,379.0 L224.9,403.9 L170.9,381.5 L174.1,349.5 L150.5,325.9 L118.5,329.1 L96.1,275.1 L121.0,254.7 L121.0,221.3 L96.1,200.9 L118.5,146.9 L150.5,150.1 L174.1,126.5 L170.9,94.5 L224.9,72.1 L245.3,97.0 Z'/%3E%3Cpath d='M205.7,344.0 L85.1,397.3 L156.0,294.3 Z'/%3E%3C/g%3E%3Ccircle cx='262' cy='238' r='96' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="/icons/favicon.svg">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Engrana">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://script.google.com">
 <style>
-  body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f3f5f9;color:#0f172a;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:16px;box-sizing:border-box}
-  .c{text-align:center;max-width:420px}
-  svg{width:84px;height:84px}
-  h1{font-size:30px;margin:12px 0 6px;letter-spacing:-.5px}
-  p{color:#475569;line-height:1.55;margin:0 0 22px}
-  a{display:inline-block;background:#2563EB;color:#fff;text-decoration:none;padding:12px 22px;border-radius:12px;font-weight:600}
+  :root{--azul:#2563EB;--azul-2:#1D4ED8;--txt:#0F172A;--sub:#475569;--fondo:#F3F5F9;--card:#FFFFFF;--linea:#E2E8F0}
+  @media (prefers-color-scheme: dark){:root{--txt:#E2E8F0;--sub:#94A3B8;--fondo:#0B1220;--card:#111A2E;--linea:#1E293B}}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--fondo);color:var(--txt);font-family:Nunito,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  .hidden{display:none!important}
+
+  /* ---------- App (sistema del taller) ---------- */
+  #app{position:fixed;inset:0}
+  #marco{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:#F3F5F9}
+  #splash{position:absolute;inset:0;display:grid;place-items:center;background:var(--fondo);z-index:5;transition:opacity .35s ease}
+  #splash.fuera{opacity:0;pointer-events:none}
+  .sp{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;padding:24px}
+  .sp svg{width:76px;height:76px;animation:gira 2.4s linear infinite}
+  @keyframes gira{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion: reduce){.sp svg{animation:none}}
+  .sp b{font-size:18px;font-weight:800}
+  .sp span{color:var(--sub);font-size:14px;max-width:280px;line-height:1.45}
+
+  /* Aviso para instalar */
+  #instalar{position:absolute;left:50%;top:max(10px,env(safe-area-inset-top));transform:translateX(-50%);z-index:6;
+    display:flex;align-items:center;gap:10px;background:#0F172A;color:#fff;border-radius:14px;padding:8px 8px 8px 14px;
+    box-shadow:0 10px 30px rgba(15,23,42,.25);font-size:14px;font-weight:700;width:max-content;max-width:calc(100% - 24px)}
+  #instalar img{width:22px;height:22px;border-radius:6px;background:#fff}
+  #instalar .x{background:transparent;border:0;color:#94A3B8;font-size:20px;line-height:1;padding:4px 6px;cursor:pointer}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:13px 22px;
+    font:800 15px/1 Nunito,system-ui,sans-serif;cursor:pointer;text-decoration:none;transition:transform .15s ease, background .15s ease}
+  .btn:active{transform:scale(.97)}
+  .btn-azul{background:var(--azul);color:#fff}
+  .btn-azul:hover{background:var(--azul-2)}
+  .btn-sm{padding:8px 14px;font-size:13.5px;border-radius:10px}
+
+  /* ---------- Página de inicio (sin código de taller) ---------- */
+  #inicio{min-height:100%;display:flex;flex-direction:column}
+  #inicio main{flex:1;display:grid;place-items:center;padding:32px 16px}
+  .hero{max-width:560px;text-align:center}
+  .marca{display:inline-flex;align-items:center;gap:10px;font-weight:900;font-size:30px;letter-spacing:-.5px}
+  .marca svg{width:48px;height:48px}
+  .hero h1{font-size:clamp(38px,8vw,58px);line-height:1.02;letter-spacing:-1.5px;margin:28px 0 14px;font-weight:900}
+  .hero h1 em{font-style:normal;color:var(--azul)}
+  .hero p{color:var(--sub);font-size:17px;line-height:1.55;margin:0 auto 28px;max-width:460px}
+  .puntos{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:30px}
+  .puntos span{background:var(--card);border:1px solid var(--linea);border-radius:999px;padding:7px 13px;font-size:13.5px;font-weight:700;color:var(--sub)}
+  .seguir{margin-top:22px;font-size:14px;color:var(--sub)}
+  .seguir a{color:var(--azul);font-weight:800;text-decoration:none}
+  #inicio footer{text-align:center;color:var(--sub);font-size:13px;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
 </style>
 </head>
 <body>
-<div class="c">
-  <svg viewBox="0 0 512 512" aria-hidden="true"><g fill="#2563EB" stroke="#2563EB" stroke-width="24" stroke-linejoin="round"><path d="M278.7,97.0 L299.1,72.1 L353.1,94.5 L349.9,126.5 L373.5,150.1 L405.5,146.9 L427.9,200.9 L403.0,221.3 L403.0,254.7 L427.9,275.1 L405.5,329.1 L373.5,325.9 L349.9,349.5 L353.1,381.5 L299.1,403.9 L278.7,379.0 L245.3,379.0 L224.9,403.9 L170.9,381.5 L174.1,349.5 L150.5,325.9 L118.5,329.1 L96.1,275.1 L121.0,254.7 L121.0,221.3 L96.1,200.9 L118.5,146.9 L150.5,150.1 L174.1,126.5 L170.9,94.5 L224.9,72.1 L245.3,97.0 Z"/><path d="M205.7,344.0 L85.1,397.3 L156.0,294.3 Z"/></g><circle cx="262" cy="238" r="96" fill="#fff"/><circle cx="218" cy="238" r="17" fill="#2563EB"/><circle cx="262" cy="238" r="17" fill="#2563EB"/><circle cx="306" cy="238" r="17" fill="#2563EB"/></svg>
-  <h1>Engrana</h1>
-  <p>Sistemas de órdenes y control para talleres.<br>Muy pronto aquí.</p>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="engrane" viewBox="0 0 512 512">
+    <g transform="translate(-0.5 18)"><g fill="#2563EB" stroke="#2563EB" stroke-width="24" stroke-linejoin="round"><path d="M278.7,97.0 L299.1,72.1 L353.1,94.5 L349.9,126.5 L373.5,150.1 L405.5,146.9 L427.9,200.9 L403.0,221.3 L403.0,254.7 L427.9,275.1 L405.5,329.1 L373.5,325.9 L349.9,349.5 L353.1,381.5 L299.1,403.9 L278.7,379.0 L245.3,379.0 L224.9,403.9 L170.9,381.5 L174.1,349.5 L150.5,325.9 L118.5,329.1 L96.1,275.1 L121.0,254.7 L121.0,221.3 L96.1,200.9 L118.5,146.9 L150.5,150.1 L174.1,126.5 L170.9,94.5 L224.9,72.1 L245.3,97.0 Z"/><path d="M205.7,344.0 L85.1,397.3 L156.0,294.3 Z"/></g><circle cx="262" cy="238" r="96" fill="#FFFFFF"/><circle cx="218" cy="238" r="17" fill="#2563EB"/><circle cx="262" cy="238" r="17" fill="#2563EB"/><circle cx="306" cy="238" r="17" fill="#2563EB"/></g>
+  </symbol>
+</svg>
+
+<!-- ===================== APP DEL TALLER ===================== -->
+<div id="app" class="hidden">
+  <iframe id="marco" title="Sistema de órdenes" allow="camera *; microphone *; clipboard-read *; clipboard-write *; fullscreen *; geolocation *"></iframe>
+  <div id="splash">
+    <div class="sp">
+      <svg><use href="#engrane"/></svg>
+      <b id="sp-titulo">Abriendo tu taller…</b>
+      <span id="sp-texto">Un momento, por favor.</span>
+      <button class="btn btn-azul btn-sm hidden" id="sp-reintentar">Reintentar</button>
+    </div>
+  </div>
+  <div id="instalar" class="hidden" role="dialog" aria-label="Instalar la app">
+    <img src="/icons/icon-192.png" alt="">
+    <span>Instala Engrana en tu celular</span>
+    <button class="btn btn-azul btn-sm" id="inst-si">Instalar</button>
+    <button class="x" id="inst-no" aria-label="Cerrar">×</button>
+  </div>
 </div>
+
+<!-- ===================== PÁGINA DE INICIO ===================== -->
+<div id="inicio" class="hidden">
+  <main>
+    <div class="hero">
+      <div class="marca"><svg><use href="#engrane"/></svg>engrana</div>
+      <h1>Tu taller,<br><em>en orden.</em></h1>
+      <p>Órdenes con foto y placa, avisos por WhatsApp, cierres de mano de obra y reportes. Desde la computadora o el celular.</p>
+      <a class="btn btn-azul" id="wa" target="_blank" rel="noopener">Pide tu demostración</a>
+      <div class="puntos"><span>Carros</span><span>Motos</span><span>Plan Básico</span><span>Plan Pro</span></div>
+      <div class="seguir hidden" id="seguir">¿Ya eres cliente? <a href="#" id="seguir-a">Entrar a mi taller</a></div>
+    </div>
+  </main>
+  <footer>© <span id="anio"></span> Engrana · Jalapa, Guatemala</footer>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ====== Ajustes ====== */
+  var EXEC = 'https://script.google.com/macros/s/AKfycbzVYX6Z67QRXI0PYRxnPfMaOThtmLNB-NvaNgRLgBlsC92df7WDm2FEAVvUFnUkj6xc/exec';
+  var WHATSAPP = '50240497833';
+
+  var $ = function (id) { return document.getElementById(id); };
+  var guardar = function (tipo, k, v) { try { window[tipo].setItem(k, v); } catch (e) {} };
+  var leer = function (tipo, k) { try { return window[tipo].getItem(k); } catch (e) { return null; } };
+  var codigoOk = function (s) { return /^[a-z0-9][a-z0-9-]{1,39}$/.test(s || ''); };
+  var urlOk = function (u) { return typeof u === 'string' && /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec\?/.test(u); };
+  var esApp = function () { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; };
+
+  /* ====== ¿Qué taller abrir? ====== */
+  var qs = new URLSearchParams(location.search);
+  var slug = String(qs.get('n') || '').trim().toLowerCase();
+  if (!codigoOk(slug) && (qs.has('pwa') || esApp())) slug = leer('localStorage', 'engrana_taller') || '';
+
+  if (codigoOk(slug)) iniciarApp(slug);
+  else mostrarInicio();
+
+  /* ====== Página de inicio ====== */
+  function mostrarInicio() {
+    $('inicio').classList.remove('hidden');
+    $('anio').textContent = new Date().getFullYear();
+    $('wa').href = 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent('Hola, quiero ver una demostración de Engrana para mi taller.');
+    var ult = leer('localStorage', 'engrana_taller');
+    if (codigoOk(ult)) { $('seguir').classList.remove('hidden'); $('seguir-a').href = '/?n=' + ult; }
+  }
+
+  /* ====== App del taller ====== */
+  var espera = null;
+  function iniciarApp(codigo) {
+    guardar('localStorage', 'engrana_taller', codigo);
+    if (location.search !== '?n=' + codigo) history.replaceState(null, '', '/?n=' + codigo);
+    $('app').classList.remove('hidden');
+
+    // Si recargó la página, vuelve a la pantalla donde estaba (la sesión la valida el servidor)
+    var previa = null;
+    try { previa = JSON.parse(leer('sessionStorage', 'engrana_pantalla') || 'null'); } catch (e) {}
+    var url = (previa && previa.s === codigo && urlOk(previa.u)) ? previa.u : EXEC + '?n=' + encodeURIComponent(codigo) + '&w=1';
+
+    $('marco').addEventListener('load', function () {
+      if (!$('marco').dataset.url) return;
+      clearTimeout(espera);
+      setTimeout(function () { $('splash').classList.add('fuera'); }, 450);
+    });
+    $('sp-reintentar').onclick = function () { abrir($('marco').dataset.url || url); };
+    window.addEventListener('online', function () { if (!$('splash').classList.contains('fuera')) abrir($('marco').dataset.url || url); });
+
+    abrir(url);
+    prepararInstalacion();
+  }
+
+  function abrir(url) {
+    $('splash').classList.remove('fuera');
+    $('sp-reintentar').classList.add('hidden');
+    if (!navigator.onLine) {
+      $('sp-titulo').textContent = 'Sin conexión a internet';
+      $('sp-texto').textContent = 'Se abrirá solo cuando vuelva la señal.';
+      $('sp-reintentar').classList.remove('hidden');
+      return;
+    }
+    $('sp-titulo').textContent = 'Abriendo tu taller…';
+    $('sp-texto').textContent = 'Un momento, por favor.';
+    clearTimeout(espera);
+    espera = setTimeout(function () {
+      $('sp-titulo').textContent = 'Está tardando más de lo normal';
+      $('sp-texto').textContent = 'Revisa tu señal de internet y vuelve a intentar.';
+      $('sp-reintentar').classList.remove('hidden');
+    }, 20000);
+    $('marco').dataset.url = url;
+    $('marco').src = url;
+    guardar('sessionStorage', 'engrana_pantalla', JSON.stringify({ s: slug, u: url }));
+  }
+
+  /* El sistema (dentro del marco) pide cambiar de pantalla: entrar, salir, etc. */
+  window.addEventListener('message', function (ev) {
+    if (!/^https:\/\/[a-z0-9-]+-script\.googleusercontent\.com$/.test(ev.origin)) return;
+    var d = ev.data;
+    if (!d || d.engrana !== 'ir' || !urlOk(d.url)) return;
+    try { ev.source.postMessage({ engrana: 'ok' }, ev.origin); } catch (e) {}
+    abrir(d.url);
+  });
+
+  /* ====== Instalar como app (Android / Chrome) ====== */
+  function prepararInstalacion() {
+    if (esApp()) return;
+    var aviso = null;
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      aviso = e;
+      var no = Number(leer('localStorage', 'engrana_no_instalar') || 0);
+      if (Date.now() - no < 7 * 864e5) return;           // lo cerró hace menos de 7 días
+      setTimeout(function () { $('instalar').classList.remove('hidden'); }, 2500);
+    });
+    $('inst-si').onclick = function () {
+      $('instalar').classList.add('hidden');
+      if (aviso) { aviso.prompt(); aviso = null; }
+    };
+    $('inst-no').onclick = function () {
+      $('instalar').classList.add('hidden');
+      guardar('localStorage', 'engrana_no_instalar', String(Date.now()));
+    };
+    window.addEventListener('appinstalled', function () { $('instalar').classList.add('hidden'); });
+  }
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  }
+})();
+</script>
 </body>
 </html>

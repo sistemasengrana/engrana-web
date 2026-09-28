@@ -1,0 +1,17 @@
+{
+  "id": "/manager/",
+  "name": "Engrana Manager",
+  "short_name": "Manager",
+  "description": "Tus clientes de Engrana en un solo lugar.",
+  "lang": "es",
+  "start_url": "/manager/",
+  "scope": "/manager/",
+  "display": "standalone",
+  "background_color": "#F3F5F9",
+  "theme_color": "#0F172A",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
