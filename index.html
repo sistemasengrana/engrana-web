@@ -95,7 +95,7 @@
 <div id="inicio" class="hidden">
   <main>
     <div class="hero">
-      <div class="marca"><svg><use href="#engrane"/></svg>engrana</div>
+      <div class="marca"><svg><use href="#engrane"/></svg>Engrana</div>
       <h1>Tu taller,<br><em>en orden.</em></h1>
       <p>Órdenes con foto y placa, avisos por WhatsApp, cierres de mano de obra y reportes. Desde la computadora o el celular.</p>
       <a class="btn btn-azul" id="wa" target="_blank" rel="noopener">Pide tu demostración</a>
@@ -123,6 +123,9 @@
 
   /* ====== ¿Qué taller abrir? ====== */
   var qs = new URLSearchParams(location.search);
+  // Ingreso de soporte desde el Manager: /?n=codigo#soporte=CLAVE (la clave no se queda en la barra)
+  var soporte = (location.hash.match(/^#soporte=([a-f0-9]{40})$/) || [])[1] || '';
+  if (soporte) history.replaceState(null, '', location.pathname + location.search);
   var slug = String(qs.get('n') || '').trim().toLowerCase();
   if (!codigoOk(slug) && (qs.has('pwa') || esApp())) slug = leer('localStorage', 'engrana_taller') || '';
 
@@ -148,7 +151,8 @@
     // Si recargó la página, vuelve a la pantalla donde estaba (la sesión la valida el servidor)
     var previa = null;
     try { previa = JSON.parse(leer('sessionStorage', 'engrana_pantalla') || 'null'); } catch (e) {}
-    var url = (previa && previa.s === codigo && urlOk(previa.u)) ? previa.u : EXEC + '?n=' + encodeURIComponent(codigo) + '&w=1';
+    var url = soporte ? EXEC + '?n=' + encodeURIComponent(codigo) + '&w=1&page=admin&t=' + soporte
+      : (previa && previa.s === codigo && urlOk(previa.u)) ? previa.u : EXEC + '?n=' + encodeURIComponent(codigo) + '&w=1';
 
     $('marco').addEventListener('load', function () {
       if (!$('marco').dataset.url) return;
