@@ -3,6 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Conecta antes con Google para que el sistema abra más rápido -->
+<link rel="preconnect" href="https://script.google.com">
+<link rel="preconnect" href="https://script.googleusercontent.com">
+<link rel="dns-prefetch" href="https://script.googleusercontent.com">
+<script>
+  /* iPhone/iPad: evita el zoom automático al tocar un campo (se puede seguir ampliando con los dedos) */
+  if (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+    document.querySelector('meta[name=viewport]').setAttribute('content', 'width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1');
+  }
+</script>
 <title>Engrana · Sistema de órdenes para talleres</title>
 <meta name="description" content="Sistema de órdenes y control para talleres de carros y motos en Guatemala.">
 <meta name="theme-color" content="#2563EB">
