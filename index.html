@@ -8,14 +8,29 @@
 <link rel="preconnect" href="https://script.googleusercontent.com">
 <link rel="dns-prefetch" href="https://script.googleusercontent.com">
 <script>
-  /* iPhone/iPad: evita el zoom automático al tocar un campo (se puede seguir ampliando con los dedos) */
+  /* iPhone/iPad: evita el zoom automático al tocar un campo. iOS ignora maximum-scale para el pellizco,
+     así que el cliente puede seguir ampliando con los dedos. Solo se aplica en iPhone/iPad. */
   if (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
     document.querySelector('meta[name=viewport]').setAttribute('content', 'width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1');
   }
 </script>
 <title>Engrana · Sistema de órdenes para talleres</title>
-<meta name="description" content="Sistema de órdenes y control para talleres de carros y motos en Guatemala.">
-<meta name="theme-color" content="#2563EB">
+<meta name="description" content="Órdenes con foto y placa, cotizaciones que el cliente autoriza con un toque y un bot con IA que contesta el WhatsApp de tu taller. Para talleres de carros y motos en Guatemala.">
+<meta name="theme-color" content="#F3F5F9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0B1220" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<!-- Vista previa al compartir el enlace (WhatsApp, Facebook) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Engrana">
+<meta property="og:locale" content="es_GT">
+<meta property="og:url" content="https://sistemasengrana.com/">
+<meta property="og:title" content="Engrana · Tu taller, en orden">
+<meta property="og:description" content="Órdenes, cotizaciones y un bot con IA que contesta el WhatsApp de tu taller.">
+<meta property="og:image" content="https://sistemasengrana.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Engrana: sistema de órdenes para talleres con bot de WhatsApp">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
@@ -24,23 +39,27 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
-<link rel="preconnect" href="https://script.google.com">
 <style>
-  :root{--azul:#2563EB;--azul-2:#1D4ED8;--txt:#0F172A;--sub:#475569;--fondo:#F3F5F9;--card:#FFFFFF;--linea:#E2E8F0}
-  @media (prefers-color-scheme: dark){:root{--txt:#E2E8F0;--sub:#94A3B8;--fondo:#0B1220;--card:#111A2E;--linea:#1E293B}}
+  :root{--azul:#2563EB;--azul-2:#1D4ED8;--azul-s:#DBEAFE;--txt:#0F172A;--sub:#475569;--fondo:#F3F5F9;--card:#FFFFFF;--linea:#E2E8F0;
+        --verde:#16A34A;--chat:#EFEAE2;--burbuja:#FFFFFF;--burbuja-bot:#D9FDD3;color-scheme:light}
+  @media (prefers-color-scheme: dark){:root{--azul-s:#172554;--txt:#E2E8F0;--sub:#94A3B8;--fondo:#0B1220;--card:#111A2E;--linea:#1E293B;
+        --chat:#0B141A;--burbuja:#1F2C34;--burbuja-bot:#005C4B;color-scheme:dark}}
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:var(--fondo);color:var(--txt);font-family:Nunito,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  body{touch-action:manipulation}
   .hidden{display:none!important}
+  :focus-visible{outline:3px solid var(--azul);outline-offset:3px;border-radius:8px}
+  h1,h2,h3{text-wrap:balance}
+  p{text-wrap:pretty}
 
   /* ---------- App (sistema del taller) ---------- */
   #app{position:fixed;inset:0}
-  #marco{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:#F3F5F9}
+  #marco{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:var(--fondo)}
   #splash{position:absolute;inset:0;display:grid;place-items:center;background:var(--fondo);z-index:5;transition:opacity .35s ease}
   #splash.fuera{opacity:0;pointer-events:none}
   .sp{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;padding:24px}
   .sp svg{width:76px;height:76px;animation:gira 2.4s linear infinite}
   @keyframes gira{to{transform:rotate(360deg)}}
-  @media (prefers-reduced-motion: reduce){.sp svg{animation:none}}
   .sp b{font-size:18px;font-weight:800}
   .sp span{color:var(--sub);font-size:14px;max-width:280px;line-height:1.45}
 
@@ -49,29 +68,122 @@
     display:flex;align-items:center;gap:10px;background:#0F172A;color:#fff;border-radius:14px;padding:8px 8px 8px 14px;
     box-shadow:0 10px 30px rgba(15,23,42,.25);font-size:14px;font-weight:700;width:max-content;max-width:calc(100% - 24px)}
   #instalar img{width:22px;height:22px;border-radius:6px;background:#fff}
-  #instalar .x{background:transparent;border:0;color:#94A3B8;font-size:20px;line-height:1;padding:4px 6px;cursor:pointer}
+  #instalar .x{background:transparent;border:0;color:#94A3B8;font-size:20px;line-height:1;padding:4px 8px;cursor:pointer;border-radius:8px}
+  #instalar .x:hover{color:#fff;background:rgba(255,255,255,.1)}
 
-  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:13px 22px;
-    font:800 15px/1 Nunito,system-ui,sans-serif;cursor:pointer;text-decoration:none;transition:transform .15s ease, background .15s ease}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:14px 22px;
+    font:800 16px/1 Nunito,system-ui,sans-serif;cursor:pointer;text-decoration:none;transition:transform .15s ease, background-color .15s ease, box-shadow .15s ease}
   .btn:active{transform:scale(.97)}
-  .btn-azul{background:var(--azul);color:#fff}
+  .btn-azul{background:var(--azul);color:#fff;box-shadow:0 8px 22px -8px rgba(37,99,235,.7)}
   .btn-azul:hover{background:var(--azul-2)}
-  .btn-sm{padding:8px 14px;font-size:13.5px;border-radius:10px}
+  .btn-sm{padding:8px 14px;font-size:13.5px;border-radius:10px;box-shadow:none}
+  .btn-borde{background:transparent;color:var(--txt);border:1.5px solid var(--linea)}
+  .btn-borde:hover{border-color:var(--azul);color:var(--azul)}
+  .btn svg{width:20px;height:20px;flex:none}
 
-  /* ---------- Página de inicio (sin código de taller) ---------- */
+  /* Botón principal con borde de luz que gira (respeta "reducir movimiento") */
+  @property --giro{syntax:'<angle>';initial-value:0deg;inherits:false}
+  .halo{border:2px solid transparent;background:linear-gradient(var(--azul),var(--azul)) padding-box,conic-gradient(from var(--giro),#1D4ED8,#93C5FD,#22C55E,#1D4ED8) border-box;animation:halo 4s linear infinite}
+  .halo:hover{background:linear-gradient(var(--azul-2),var(--azul-2)) padding-box,conic-gradient(from var(--giro),#1D4ED8,#93C5FD,#22C55E,#1D4ED8) border-box}
+  @keyframes halo{to{--giro:360deg}}
+
+  /* ---------- Página de inicio ---------- */
   #inicio{min-height:100%;display:flex;flex-direction:column}
-  #inicio main{flex:1;display:grid;place-items:center;padding:32px 16px}
-  .hero{max-width:560px;text-align:center}
-  .marca{display:inline-flex;align-items:center;gap:10px;font-weight:900;font-size:30px;letter-spacing:-.5px}
-  .marca svg{width:48px;height:48px}
-  .hero h1{font-size:clamp(38px,8vw,58px);line-height:1.02;letter-spacing:-1.5px;margin:28px 0 14px;font-weight:900}
+  .wrap{width:100%;max-width:1120px;margin:0 auto;padding-inline:max(16px,env(safe-area-inset-left))}
+  header.top{padding-block:max(16px,env(safe-area-inset-top)) 0}
+  .top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .marca{display:inline-flex;align-items:center;gap:10px;font-weight:900;font-size:24px;letter-spacing:-.4px;color:var(--txt);text-decoration:none}
+  .marca svg{width:40px;height:40px}
+  .top a.entrar{font-weight:800;font-size:14px;color:var(--azul);text-decoration:none;padding:8px 10px;border-radius:10px}
+  .top a.entrar:hover{background:var(--azul-s)}
+
+  .hero .wrap{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:40px;align-items:center;padding-block:40px 56px}
+  .chip{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--linea);border-radius:999px;padding:6px 12px 6px 8px;font-size:13.5px;font-weight:800;color:var(--sub)}
+  .chip i{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--azul);color:#fff;font-style:normal;font-size:12px}
+  .hero h1{font-size:clamp(40px,7vw,64px);line-height:1.02;letter-spacing:-1.5px;margin:20px 0 16px;font-weight:900}
   .hero h1 em{font-style:normal;color:var(--azul)}
-  .hero p{color:var(--sub);font-size:17px;line-height:1.55;margin:0 auto 28px;max-width:460px}
-  .puntos{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:30px}
-  .puntos span{background:var(--card);border:1px solid var(--linea);border-radius:999px;padding:7px 13px;font-size:13.5px;font-weight:700;color:var(--sub)}
-  .seguir{margin-top:22px;font-size:14px;color:var(--sub)}
-  .seguir a{color:var(--azul);font-weight:800;text-decoration:none}
-  #inicio footer{text-align:center;color:var(--sub);font-size:13px;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+  .hero p.lead{color:var(--sub);font-size:18px;line-height:1.55;margin:0 0 28px;max-width:520px}
+  .ctas{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+  .nota{margin-top:16px;font-size:14px;color:var(--sub)}
+
+  /* Teléfono */
+  .tel{position:relative;justify-self:center;width:min(300px,78vw);aspect-ratio:600/1298;border-radius:42px;background:#0B1220;padding:10px;
+       box-shadow:0 30px 60px -20px rgba(15,23,42,.45),0 0 0 1px rgba(148,163,184,.25)}
+  .tel img{display:block;width:100%;height:100%;object-fit:cover;object-position:top;border-radius:32px;background:#fff}
+
+  section{padding-block:56px}
+  .eti{font-size:13px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--azul);margin:0 0 10px}
+  h2{font-size:clamp(28px,4.5vw,40px);line-height:1.1;letter-spacing:-.8px;margin:0 0 14px;font-weight:900}
+  .sub2{color:var(--sub);font-size:17px;line-height:1.55;margin:0;max-width:600px}
+
+  /* IA */
+  .ia{background:var(--card);border-block:1px solid var(--linea)}
+  .ia .wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:center}
+  .lista{list-style:none;padding:0;margin:24px 0 0;display:grid;gap:14px;text-align:left;max-width:520px}
+  .lista li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:12px;align-items:start;font-size:16px;line-height:1.5}
+  .lista li b{display:block}
+  .lista li span{color:var(--sub)}
+  .ok{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--azul-s);color:var(--azul);font-weight:900;font-size:14px}
+
+  .chat{background:var(--chat);border-radius:20px;padding:18px 14px;display:flex;flex-direction:column;gap:8px;border:1px solid var(--linea);max-width:440px;justify-self:center;width:100%}
+  .chat .cab{display:flex;align-items:center;gap:10px;padding:0 4px 10px;border-bottom:1px solid var(--linea);margin-bottom:4px}
+  .chat .cab .av{width:36px;height:36px;border-radius:50%;background:var(--azul);display:grid;place-items:center}
+  .chat .cab .av svg{width:24px;height:24px}
+  .chat .cab b{font-size:15px}
+  .chat .cab small{display:block;color:var(--verde);font-weight:700;font-size:12.5px}
+  .msg{max-width:84%;padding:8px 11px 6px;border-radius:12px;font-size:14.5px;line-height:1.4;box-shadow:0 1px 1px rgba(0,0,0,.08);overflow-wrap:anywhere}
+  .msg small{display:block;text-align:right;font-size:11.5px;color:var(--sub);margin-top:2px;font-variant-numeric:tabular-nums}
+  .cli{align-self:flex-end;background:var(--burbuja-bot)}
+  .bot{align-self:flex-start;background:var(--burbuja)}
+  .bot .who{display:block;font-size:12px;font-weight:800;color:var(--verde);margin-bottom:2px}
+  .bots{display:flex;gap:6px;margin-top:8px}
+  .bots span{flex:1;text-align:center;padding:7px 6px;border-radius:9px;border:1px solid var(--linea);color:var(--azul);font-weight:800;font-size:13.5px;background:var(--card)}
+  .dia{align-self:center;font-size:12px;font-weight:800;color:var(--sub);background:var(--card);border-radius:8px;padding:3px 10px;margin:4px 0}
+  /* Aparición en orden (solo si el usuario no pidió reducir movimiento) */
+  .chat.play .msg{animation:entra .45s ease both}
+  @keyframes entra{from{opacity:0;transform:translateY(8px)}}
+
+  /* Funciones */
+  .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:32px}
+  .fun{background:var(--card);border:1px solid var(--linea);border-radius:20px;overflow:hidden;display:flex;flex-direction:column}
+  .fun .foto{background:linear-gradient(180deg,var(--azul-s),transparent);padding:22px 22px 0;height:300px;overflow:hidden;display:flex;justify-content:center}
+  .fun .foto img{width:78%;max-width:240px;height:auto;align-self:flex-start;border-radius:20px 20px 0 0;box-shadow:0 10px 30px -12px rgba(15,23,42,.35)}
+  .fun .txt{padding:18px 20px 22px}
+  .fun h3{margin:0 0 6px;font-size:19px;font-weight:900}
+  .fun p{margin:0;color:var(--sub);font-size:15px;line-height:1.5}
+
+  /* Planes */
+  .planes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:32px;max-width:860px}
+  .plan{background:var(--card);border:1px solid var(--linea);border-radius:20px;padding:24px}
+  .plan.pro{border:2px solid var(--azul);position:relative}
+  .plan .tag{position:absolute;top:-12px;left:22px;background:var(--azul);color:#fff;font-size:12px;font-weight:900;padding:4px 10px;border-radius:999px}
+  .plan h3{margin:0 0 4px;font-size:22px;font-weight:900}
+  .plan p{margin:0 0 16px;color:var(--sub);font-size:15px}
+  .plan ul{list-style:none;padding:0;margin:0;display:grid;gap:9px}
+  .plan li{display:grid;grid-template-columns:20px minmax(0,1fr);gap:8px;font-size:15px;line-height:1.4}
+  .plan li::before{content:"✓";color:var(--azul);font-weight:900}
+  .plan li.mas{font-weight:800}
+
+  .final{text-align:center}
+  .final .sub2{margin:0 auto 24px}
+  .final .ctas{justify-content:center}
+  #inicio footer{text-align:center;color:var(--sub);font-size:13px;padding:24px 16px calc(24px + env(safe-area-inset-bottom));border-top:1px solid var(--linea)}
+
+  @media (max-width:860px){
+    .hero .wrap,.ia .wrap{grid-template-columns:minmax(0,1fr);gap:32px}
+    .hero .wrap{padding-block:24px 40px;text-align:center}
+    .hero p.lead{margin-inline:auto}
+    .hero .ctas{justify-content:center}
+    .grid3{grid-template-columns:minmax(0,1fr);max-width:440px;margin-inline:auto}
+    .planes{grid-template-columns:minmax(0,1fr);max-width:440px;margin-inline:auto}
+    section{padding-block:44px}
+    .sec-cab{text-align:center}
+    .sec-cab .sub2,.sec-cab .lista{margin-inline:auto}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .sp svg,.halo,.chat.play .msg{animation:none}
+    .btn{transition:none}
+  }
 </style>
 </head>
 <body>
@@ -80,40 +192,158 @@
   <symbol id="engrane" viewBox="0 0 512 512">
     <g transform="translate(-0.5 18)"><g fill="#2563EB" stroke="#2563EB" stroke-width="24" stroke-linejoin="round"><path d="M278.7,97.0 L299.1,72.1 L353.1,94.5 L349.9,126.5 L373.5,150.1 L405.5,146.9 L427.9,200.9 L403.0,221.3 L403.0,254.7 L427.9,275.1 L405.5,329.1 L373.5,325.9 L349.9,349.5 L353.1,381.5 L299.1,403.9 L278.7,379.0 L245.3,379.0 L224.9,403.9 L170.9,381.5 L174.1,349.5 L150.5,325.9 L118.5,329.1 L96.1,275.1 L121.0,254.7 L121.0,221.3 L96.1,200.9 L118.5,146.9 L150.5,150.1 L174.1,126.5 L170.9,94.5 L224.9,72.1 L245.3,97.0 Z"/><path d="M205.7,344.0 L85.1,397.3 L156.0,294.3 Z"/></g><circle cx="262" cy="238" r="96" fill="#FFFFFF"/><circle cx="218" cy="238" r="17" fill="#2563EB"/><circle cx="262" cy="238" r="17" fill="#2563EB"/><circle cx="306" cy="238" r="17" fill="#2563EB"/></g>
   </symbol>
+  <symbol id="ico-wa" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.3a.5.5 0 0 0 0-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.3 2.2 2.2 0 0 0 .1-1.3c0-.1-.2-.2-.5-.3Z"/></symbol>
 </svg>
 
 <!-- ===================== APP DEL TALLER ===================== -->
 <div id="app" class="hidden">
   <iframe id="marco" title="Sistema de órdenes" allow="camera *; microphone *; clipboard-read *; clipboard-write *; fullscreen *; geolocation *"></iframe>
   <div id="splash">
-    <div class="sp">
-      <svg><use href="#engrane"/></svg>
+    <div class="sp" role="status" aria-live="polite">
+      <svg aria-hidden="true"><use href="#engrane"/></svg>
       <b id="sp-titulo">Abriendo tu taller…</b>
       <span id="sp-texto">Un momento, por favor.</span>
-      <button class="btn btn-azul btn-sm hidden" id="sp-reintentar">Reintentar</button>
+      <button class="btn btn-azul btn-sm hidden" id="sp-reintentar" type="button">Reintentar</button>
     </div>
   </div>
   <div id="instalar" class="hidden" role="dialog" aria-label="Instalar la app">
-    <img src="/icons/icon-192.png" alt="">
+    <img src="/icons/icon-192.png" alt="" width="22" height="22">
     <span>Instala Engrana en tu celular</span>
-    <button class="btn btn-azul btn-sm" id="inst-si">Instalar</button>
-    <button class="x" id="inst-no" aria-label="Cerrar">×</button>
+    <button class="btn btn-azul btn-sm" id="inst-si" type="button">Instalar</button>
+    <button class="x" id="inst-no" type="button" aria-label="Cerrar aviso">×</button>
   </div>
 </div>
 
 <!-- ===================== PÁGINA DE INICIO ===================== -->
 <div id="inicio" class="hidden">
-  <main>
-    <div class="hero">
-      <div class="marca"><svg><use href="#engrane"/></svg>Engrana</div>
-      <h1>Tu taller,<br><em>en orden.</em></h1>
-      <p>Órdenes con foto y placa, avisos por WhatsApp, cierres de mano de obra y reportes. Desde la computadora o el celular.</p>
-      <a class="btn btn-azul" id="wa" target="_blank" rel="noopener">Pide tu demostración</a>
-      <div class="puntos"><span>Carros</span><span>Motos</span><span>Plan Básico</span><span>Plan Pro</span></div>
-      <div class="seguir hidden" id="seguir">¿Ya eres cliente? <a href="#" id="seguir-a">Entrar a mi taller</a></div>
+  <header class="top">
+    <div class="wrap">
+      <a class="marca" href="/" aria-label="Engrana, inicio"><svg aria-hidden="true"><use href="#engrane"/></svg><span translate="no">Engrana</span></a>
+      <a class="entrar hidden" id="seguir-top" href="#">Entrar a mi taller</a>
     </div>
+  </header>
+
+  <main>
+    <!-- Héroe -->
+    <section class="hero" style="padding:0">
+      <div class="wrap">
+        <div>
+          <span class="chip"><i aria-hidden="true">IA</i>Bot de WhatsApp con IA</span>
+          <h1>Tu taller,<br><em>en orden.</em></h1>
+          <p class="lead">Órdenes con foto y placa, cotizaciones que el cliente autoriza con un toque y avisos automáticos por WhatsApp. Desde la computadora o el celular.</p>
+          <div class="ctas">
+            <a class="btn btn-azul halo wa" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#ico-wa"/></svg>Pide tu demostración</a>
+            <a class="btn btn-borde" href="#ia">Ver cómo funciona</a>
+          </div>
+          <p class="nota">Para talleres de carros y motos en Guatemala.</p>
+        </div>
+        <div class="tel">
+          <img src="/img/chat.webp" width="600" height="1298" fetchpriority="high" alt="Pantalla de Engrana con la conversación de WhatsApp: el bot avisa al cliente que recibimos su vehículo y le da su número de orden.">
+        </div>
+      </div>
+    </section>
+
+    <!-- IA -->
+    <section class="ia" id="ia" style="scroll-margin-top:16px">
+      <div class="wrap">
+        <div class="sec-cab">
+          <p class="eti">Bot con inteligencia artificial</p>
+          <h2>Tu WhatsApp contesta solo, hasta de noche.</h2>
+          <p class="sub2">Tus clientes preguntan cómo va su carro a cualquier hora. Engrana les responde con el estado real de su orden, sin que dejes de trabajar.</p>
+          <ul class="lista">
+            <li><span class="ok" aria-hidden="true">✓</span><div><b>Responde “¿ya está mi carro?”</b><span>Busca la orden por placa, número o teléfono y dice en qué va.</span></div></li>
+            <li><span class="ok" aria-hidden="true">✓</span><div><b>Manda la cotización con botones</b><span>El cliente toca “Autorizar” y la orden pasa sola a reparación.</span></div></li>
+            <li><span class="ok" aria-hidden="true">✓</span><div><b>Avisa cuando está listo</b><span>Con el total a pagar y tu horario. También al recibirlo y al entregarlo.</span></div></li>
+            <li><span class="ok" aria-hidden="true">✓</span><div><b>Sabe cuándo pasarte el chat</b><span>Si no está seguro, te avisa en la campanita para que contestes tú.</span></div></li>
+          </ul>
+        </div>
+
+        <div class="chat" id="chat-demo" aria-label="Ejemplo de conversación con el bot">
+          <div class="cab"><span class="av" aria-hidden="true"><svg><use href="#engrane"/></svg></span><div><b>Taller Demo</b><small>en línea</small></div></div>
+          <span class="dia">Hoy</span>
+          <div class="msg cli">Buenas, ¿ya está mi carro?<small>20:14</small></div>
+          <div class="msg bot"><span class="who">Bot</span><b>Orden 2600</b> · Nissan Sentra 2015 (P-512KLM)<br>Estado: <b>En reparación</b> 🔧<br>Ya le enviamos la cotización: total <b>Q&nbsp;670.00</b>.
+            <div class="bots"><span>Autorizar</span><span>No, gracias</span></div><small>20:14</small></div>
+          <div class="msg cli">Autorizar<small>20:15</small></div>
+          <div class="msg bot"><span class="who">Bot</span>✅ ¡Gracias! Quedó autorizada la cotización de la orden 2600 por <b>Q&nbsp;670.00</b>. Mañana a primera hora seguimos con su Nissan Sentra.<small>20:15</small></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Funciones -->
+    <section id="funciones">
+      <div class="wrap">
+        <div class="sec-cab">
+          <p class="eti">Todo el taller en un lugar</p>
+          <h2>De la recepción al cobro, sin papeles.</h2>
+          <p class="sub2">Cada orden queda con quién la recibió, quién la trabajó, qué traía el vehículo y cuánto se cobró.</p>
+        </div>
+        <div class="grid3">
+          <article class="fun">
+            <div class="foto"><img src="/img/recepcion.webp" width="600" height="1298" loading="lazy" alt="Recepción: dibujo del vehículo visto desde arriba para marcar golpes y lista de lo que trae."></div>
+            <div class="txt"><h3>Recepción sin reclamos</h3><p>Marca golpes en el dibujo, toma la foto y anota lo que trae: llaves, tricket, radio…</p></div>
+          </article>
+          <article class="fun">
+            <div class="foto"><img src="/img/cotizacion.webp" width="600" height="1298" loading="lazy" alt="Cotización con mano de obra y repuestos, tiempo estimado y total de 670 quetzales."></div>
+            <div class="txt"><h3>Cotiza en un minuto</h3><p>Repuestos y mano de obra, tiempo estimado y total. Se envía por WhatsApp o en PDF.</p></div>
+          </article>
+          <article class="fun">
+            <div class="foto"><img src="/img/panel.webp" width="600" height="1298" loading="lazy" alt="Panel de control con órdenes activas, reparadas, ingresos del mes y gráfica de ingresos."></div>
+            <div class="txt"><h3>Tu taller en números</h3><p>Órdenes activas, reparadas e ingresos del mes. Reportes por técnico en PDF y Excel.</p></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Planes -->
+    <section id="planes" style="padding-top:0">
+      <div class="wrap">
+        <div class="sec-cab">
+          <p class="eti">Planes</p>
+          <h2>Empieza con lo que necesitas.</h2>
+          <p class="sub2">Te lo instalamos, lo configuramos con los datos de tu taller y capacitamos a tu equipo.</p>
+        </div>
+        <div class="planes">
+          <div class="plan">
+            <h3>Plan Básico</h3>
+            <p>Para ordenar el taller.</p>
+            <ul>
+              <li>Órdenes con PIN por perfil</li>
+              <li>Recepción con dibujo de golpes</li>
+              <li>Fotos y galería</li>
+              <li>Cotizaciones por WhatsApp</li>
+              <li>Reportes PDF y Excel</li>
+            </ul>
+          </div>
+          <div class="plan pro">
+            <span class="tag">Con IA</span>
+            <h3>Plan Pro</h3>
+            <p>Para que el WhatsApp trabaje por ti.</p>
+            <ul>
+              <li class="mas">Todo lo del Plan Básico</li>
+              <li>Bot de WhatsApp con IA</li>
+              <li>Avisos automáticos: recibido, listo y entregado</li>
+              <li>Cotización con botón “Autorizar”</li>
+              <li>Conversaciones del taller en la app</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cierre -->
+    <section class="final ia">
+      <div class="wrap">
+        <h2>¿Lo vemos funcionando en tu taller?</h2>
+        <p class="sub2">Escríbenos y te mostramos Engrana con órdenes de ejemplo de carros o motos.</p>
+        <div class="ctas">
+          <a class="btn btn-azul wa" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#ico-wa"/></svg>Pide tu demostración</a>
+        </div>
+        <p class="nota hidden" id="seguir">¿Ya eres cliente? <a href="#" id="seguir-a" style="color:var(--azul);font-weight:800">Entrar a mi taller</a></p>
+      </div>
+    </section>
   </main>
-  <footer>© <span id="anio"></span> Engrana · Jalapa, Guatemala</footer>
+  <footer>© <span id="anio"></span> <span translate="no">Engrana</span> · Jalapa, Guatemala</footer>
 </div>
 
 <script>
@@ -146,9 +376,23 @@
   function mostrarInicio() {
     $('inicio').classList.remove('hidden');
     $('anio').textContent = new Date().getFullYear();
-    $('wa').href = 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent('Hola, quiero ver una demostración de Engrana para mi taller.');
+    var wa = 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent('Hola, quiero ver una demostración de Engrana para mi taller.');
+    Array.prototype.forEach.call(document.querySelectorAll('a.wa'), function (a) { a.href = wa; });
     var ult = leer('localStorage', 'engrana_taller');
-    if (codigoOk(ult)) { $('seguir').classList.remove('hidden'); $('seguir-a').href = '/?n=' + ult; }
+    if (codigoOk(ult)) {
+      $('seguir').classList.remove('hidden'); $('seguir-a').href = '/?n=' + ult;
+      $('seguir-top').classList.remove('hidden'); $('seguir-top').href = '/?n=' + ult;
+    }
+    // La conversación de ejemplo aparece mensaje por mensaje cuando se ve en pantalla
+    var chat = $('chat-demo');
+    var quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (chat && !quieto && 'IntersectionObserver' in window) {
+      Array.prototype.forEach.call(chat.querySelectorAll('.msg'), function (m, i) { m.style.animationDelay = (i * 0.7) + 's'; });
+      var io = new IntersectionObserver(function (es) {
+        if (es[0].isIntersecting) { chat.classList.add('play'); io.disconnect(); }
+      }, { threshold: 0.35 });
+      io.observe(chat);
+    }
   }
 
   /* ====== App del taller ====== */
