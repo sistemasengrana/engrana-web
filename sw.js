@@ -2,7 +2,7 @@
    Guarda la "cáscara" de la app (esta página, íconos y manifiesto) para que abra rápido
    y muestre un aviso si no hay internet. El sistema en sí (Google Apps Script) siempre
    se carga en línea; este archivo no toca sus datos. */
-var VERSION = 'engrana-v1';
+var VERSION = 'engrana-v2';
 var CASCARA = ['/', '/index.html', '/manifest.webmanifest', '/icons/favicon.svg',
   '/icons/icon-192.png', '/icons/icon-512.png', '/icons/maskable-512.png', '/icons/apple-touch-icon.png',
   '/manager/', '/manager/index.html', '/manager/manifest.webmanifest'];
