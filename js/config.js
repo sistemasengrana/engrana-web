@@ -7,7 +7,7 @@ window.ENGRANA_CONFIG = {
   // URL de la implementación de Apps Script de la agenda (apps-script/Agenda.gs).
   // Termina en /exec. Si la dejas vacía, la página funciona igual:
   // al agendar abre WhatsApp con los datos de la cita.
-  agendaUrl: '',
+  agendaUrl: 'https://script.google.com/macros/s/AKfycbz7xXeNxwrQwKnVQFAfcgUkNhE1VCPblwiGjTLZ8BIwKl_-TTm67ObHHkgQyUIvChmz/exec',
 
   // Cupos del mes. Cambia "tomados" cada vez que cierres un taller.
   cupos: { total: 3, tomados: 0 },
