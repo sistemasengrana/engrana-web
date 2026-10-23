@@ -24,3 +24,18 @@ window.ENGRANA_CONFIG = {
   metaPixelId: '',       // ej. '123456789012345'
   googleTagId: ''        // ej. 'G-XXXXXXXXXX' o 'AW-XXXXXXXXX'
 };
+/* ==========================================================================
+   PRIVACIDAD (23/10/2026) — pega este bloque AL FINAL de js/config.js
+   Los anuncios (Meta / Google) SOLO se cargan si el visitante los aceptó en el
+   aviso de cookies. Mientras no acepte, se apagan aquí antes de que landing.js
+   los lea. Si metaPixelId y googleTagId están vacíos, esto no hace nada.
+   ========================================================================== */
+(function () {
+  var c = window.ENGRANA_CONFIG;
+  var acepto = window.engranaConsent && window.engranaConsent.marketing();
+  if (c && !acepto) {
+    c._metaPixelId = c.metaPixelId; c._googleTagId = c.googleTagId;   // se recuerdan para mostrar el aviso
+    c.metaPixelId = ''; c.googleTagId = '';
+  }
+})();
+
