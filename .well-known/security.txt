@@ -1,0 +1,5 @@
+Contact: mailto:sistemasengrana@gmail.com
+Expires: 2027-10-23T00:00:00.000Z
+Preferred-Languages: es, en
+Canonical: https://sistemasengrana.com/.well-known/security.txt
+Policy: https://sistemasengrana.com/privacidad.html#seguridad
